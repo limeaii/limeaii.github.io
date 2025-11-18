@@ -5,8 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gemini Creative Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React and ReactDOM UMD (Universal Module Definition) for browser usage -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel Standalone to compile JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <style>
-      /* For a better dark mode experience with Tailwind */
       html, body {
         height: 100%;
         width: 100%;
@@ -20,19 +27,25 @@
         height: 100%;
       }
     </style>
-  <script type="importmap">
+    
+    <!-- Import map for the Google GenAI library -->
+    <script type="importmap">
 {
   "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://esm.run/@google/genai",
     "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
   }
 }
 </script>
-</head>
+  </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+
+    <!-- 1. Load Service (As a Module to support imports) -->
+    <script type="module" src="./services/geminiService.js"></script>
+
+    <!-- 2. Load App Logic (Consolidated into one file for reliability) -->
+    <script type="text/babel" src="./index.js"></script>
   </body>
 </html>
