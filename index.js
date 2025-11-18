@@ -99,14 +99,14 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white selection:bg-[#ccff00] selection:text-black">
+    <div className="flex items-center justify-center min-h-screen bg-white selection:bg-[#ccff00] selection:text-black font-['Fredoka']">
       <div className="w-full max-w-sm p-8 border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white">
         <div className="text-center mb-8">
           <h1 className="text-6xl font-bold text-black mb-2 tracking-tight">
             lime<span className="text-[#ccff00] text-7xl">.</span>ai
           </h1>
-          <div className="h-2 w-24 bg-[#ccff00] mx-auto rounded-full"></div>
-          <p className="text-black mt-4 font-semibold text-lg">
+          <div className="h-2 w-24 bg-[#ccff00] mx-auto rounded-full border border-black"></div>
+          <p className="text-black mt-4 font-semibold text-lg tracking-wide">
             {isLogin ? 'WELCOME BACK' : 'CREATE ACCOUNT'}
           </p>
         </div>
@@ -119,7 +119,7 @@ const AuthPage = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              className="block w-full px-5 py-4 text-black bg-gray-50 border-2 border-black rounded-xl focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#ccff00] transition-all placeholder-gray-400 font-bold text-lg"
+              className="block w-full px-5 py-4 text-black bg-white border-2 border-black rounded-xl focus:outline-none focus:shadow-[4px_4px_0px_0px_#ccff00] transition-all placeholder-gray-400 font-bold text-lg"
               placeholder="Username"
             />
           </div>
@@ -130,7 +130,7 @@ const AuthPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="block w-full px-5 py-4 text-black bg-gray-50 border-2 border-black rounded-xl focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#ccff00] transition-all placeholder-gray-400 font-bold text-lg"
+              className="block w-full px-5 py-4 text-black bg-white border-2 border-black rounded-xl focus:outline-none focus:shadow-[4px_4px_0px_0px_#ccff00] transition-all placeholder-gray-400 font-bold text-lg"
               placeholder="Password"
             />
           </div>
@@ -149,7 +149,7 @@ const AuthPage = () => {
         <div className="mt-8 text-center">
           <button 
             onClick={() => { setIsLogin(!isLogin); setError(''); }} 
-            className="text-base font-bold text-gray-400 hover:text-black underline decoration-2 decoration-[#ccff00] underline-offset-4 transition-colors"
+            className="text-base font-bold text-gray-400 hover:text-black underline decoration-4 decoration-[#ccff00] underline-offset-4 transition-colors"
           >
             {isLogin ? "Don't have an account? Join" : 'Already a member? Login'}
           </button>
@@ -161,7 +161,7 @@ const AuthPage = () => {
 
 const QAPanel = () => {
   const [messages, setMessages] = useState([
-    { role: 'model', content: "Hello! I'm lime.ai. Ask me anything." }
+    { role: 'model', content: "Hello! I'm lime.ai. I'm listening." }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -187,7 +187,6 @@ const QAPanel = () => {
     }));
 
     try {
-      // Access generateAnswer from the global service object
       const response = await window.geminiService.generateAnswer(input, history);
       const modelMessage = { role: 'model', content: response };
       setMessages((prev) => [...prev, modelMessage]);
@@ -198,7 +197,7 @@ const QAPanel = () => {
   };
 
   return (
-    <div className="flex flex-col h-full max-w-4xl mx-auto w-full px-4 font-sans">
+    <div className="flex flex-col h-full max-w-4xl mx-auto w-full px-4 font-['Fredoka']">
       <div className="flex-1 overflow-y-auto space-y-6 py-8 no-scrollbar">
         {messages.map((msg, index) => (
           <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -207,7 +206,7 @@ const QAPanel = () => {
                 ? 'bg-[#ccff00] text-black border-2 border-black rounded-3xl rounded-tr-none' 
                 : 'bg-black text-white border-2 border-black rounded-3xl rounded-tl-none'
             }`}>
-              <p className="whitespace-pre-wrap">{msg.content}</p>
+              <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
             </div>
           </div>
         ))}
@@ -245,7 +244,7 @@ const QAPanel = () => {
             <button
               onClick={handleSend}
               disabled={isLoading || !input.trim()}
-              className="mr-3 p-3 rounded-full bg-black text-[#ccff00] hover:bg-[#ccff00] hover:text-black disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-all"
+              className="mr-3 p-3 rounded-full bg-black text-[#ccff00] hover:bg-[#ccff00] hover:text-black disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-all border-2 border-transparent hover:border-black"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -262,11 +261,11 @@ const MainApp = () => {
   const { user, logout } = useAuth();
 
   return (
-    <div className="flex flex-col h-screen bg-white selection:bg-[#ccff00] selection:text-black">
+    <div className="flex flex-col h-screen bg-white selection:bg-[#ccff00] selection:text-black font-['Fredoka']">
       <header className="flex items-center justify-between px-8 py-6 bg-white border-b-4 border-black sticky top-0 z-10">
         <div className="flex items-center">
           <h1 className="text-3xl font-black tracking-tight text-black hover:text-[#ccff00] transition-colors cursor-default">
-            lime.ai
+            lime<span className="text-[#ccff00]">.</span>ai
           </h1>
         </div>
         <div className="flex items-center gap-6">
@@ -309,7 +308,7 @@ const App = () => {
 };
 
 // --- Mounting Logic ---
-console.log("Attempting to mount React app...");
+console.log("Mounting lime.ai...");
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
