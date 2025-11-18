@@ -1,0 +1,5 @@
+{
+  "name": "Gemini Creative Suite",
+  "description": "An AI-powered application for generating images and engaging in intelligent conversations. Features a functional user authentication system to save your creative sessions.",
+  "requestFramePermissions": []
+}
