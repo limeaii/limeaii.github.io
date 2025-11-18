@@ -1,9 +1,9 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import type { User } from '../types.ts';
 
 interface AuthContextType {
   user: User | null;
+  isLoading: boolean;
   login: (username: string, pass: string) => boolean;
   signup: (username: string, pass: string) => boolean;
   logout: () => void;
@@ -13,6 +13,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const storedUserRaw = localStorage.getItem('gemini-creative-suite-user');
@@ -29,6 +30,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.removeItem('gemini-creative-suite-user');
       }
     }
+    setIsLoading(false);
   }, []);
 
   const login = (username: string, pass: string): boolean => {
@@ -63,7 +65,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );
