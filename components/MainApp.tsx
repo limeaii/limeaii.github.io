@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import QAPanel from './QAPanel';
-import ImageGenPanel from './ImageGenPanel';
+import { useAuth } from '../hooks/useAuth.tsx';
+import QAPanel from './QAPanel.tsx';
+import ImageGenPanel from './ImageGenPanel.tsx';
 
 type ActiveTab = 'qa' | 'image';
 

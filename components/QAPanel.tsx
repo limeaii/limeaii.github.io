@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import type { ChatMessage } from '../types';
-import { generateAnswer } from '../services/geminiService';
+import type { ChatMessage } from '../types.ts';
+import { generateAnswer } from '../services/geminiService.ts';
 
 const QAPanel: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([

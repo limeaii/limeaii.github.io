@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { generateImage } from '../services/geminiService';
+import { generateImage } from '../services/geminiService.ts';
 
 const ImageGenPanel: React.FC = () => {
   const [prompt, setPrompt] = useState('');

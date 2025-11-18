@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { useAuth } from './hooks/useAuth';
-import AuthPage from './components/AuthPage';
-import MainApp from './components/MainApp';
+import { useAuth } from './hooks/useAuth.tsx';
+import AuthPage from './components/AuthPage.tsx';
+import MainApp from './components/MainApp.tsx';
 
 const App: React.FC = () => {
   const { user } = useAuth();

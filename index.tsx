@@ -1,8 +1,10 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import { AuthProvider } from './hooks/useAuth';
+import App from './App.tsx';
+import { AuthProvider } from './hooks/useAuth.tsx';
+
+console.log("Attempting to mount React app...");
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
