@@ -1,5 +1,7 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 
+console.log("Gemini Service v2 (Imagen) Initializing...");
+
 const API_KEY = "AIzaSyBAnKFv0b874M5ofplpPMDLWWPSGdt4Kjg";
 
 const getGenAIClient = () => {
@@ -27,9 +29,11 @@ const generateAnswer = async (prompt, history) => {
 
 const generateImage = async (prompt) => {
   try {
+    console.log("Attempting to generate image with Imagen 3/4...");
     const ai = getGenAIClient();
     
-    // Use Imagen 4 model for high-quality image generation and to avoid Flash Image quota limits.
+    // Use Imagen 4 model for high-quality image generation.
+    // This avoids the "Limit: 0" quota error often seen on the Flash Image model.
     const response = await ai.models.generateImages({
       model: 'imagen-4.0-generate-001',
       prompt: prompt,
@@ -41,6 +45,7 @@ const generateImage = async (prompt) => {
 
     if (response.generatedImages && response.generatedImages.length > 0) {
       const base64ImageBytes = response.generatedImages[0].image.imageBytes;
+      console.log("Image generated successfully");
       // Return as JPEG data URI
       return `data:image/jpeg;base64,${base64ImageBytes}`;
     }
@@ -48,6 +53,10 @@ const generateImage = async (prompt) => {
     return null;
   } catch (error) {
     console.error("Error generating image:", error);
+    // If detailed error exists, log it for debugging
+    if (error.response) {
+        console.error("API Response Error:", JSON.stringify(error.response, null, 2));
+    }
     return null;
   }
 };
@@ -58,4 +67,4 @@ window.geminiService = {
   generateImage
 };
 
-console.log("Gemini Service initialized");
+console.log("Gemini Service initialized and attached to window");

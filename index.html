@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gemini Creative Suite</title>
+    <title>Cemil.ai</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- React and ReactDOM UMD (Universal Module Definition) for browser usage -->
@@ -21,7 +21,7 @@
         padding: 0;
       }
       body {
-        background-color: #0f172a; /* slate-900 */
+        background-color: #f9fafb; /* gray-50 */
       }
       #root {
         height: 100%;
@@ -43,7 +43,8 @@
     <div id="root"></div>
 
     <!-- 1. Load Service (As a Module to support imports) -->
-    <script type="module" src="./services/geminiService.js"></script>
+    <!-- Renamed to aiService.js to force fresh load -->
+    <script type="module" src="./services/aiService.js"></script>
 
     <!-- 2. Load App Logic (Consolidated into one file for reliability) -->
     <script type="text/babel" src="./index.js"></script>
