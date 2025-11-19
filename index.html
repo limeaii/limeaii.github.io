@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="lime.ai - Minimalist AI Interface" />
     <title>lime.ai</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- React and ReactDOM -->
@@ -87,21 +88,24 @@
       const generateImage = async (prompt) => {
         try {
           const ai = getGenAIClient();
-          const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: prompt,
+          // Using gemini-2.5-flash-image as it is generally available on free tier 
+          // (unlike Imagen 4.0 which requires billing)
+          const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+              parts: [{ text: prompt }],
+            },
             config: {
-              numberOfImages: 1,
-              outputMimeType: 'image/jpeg',
-              aspectRatio: '1:1',
+              responseModalities: ['IMAGE'],
             },
           });
           
-          if (response.generatedImages && response.generatedImages.length > 0) {
-            const imageBytes = response.generatedImages[0].image.imageBytes;
-            return `data:image/jpeg;base64,${imageBytes}`;
+          const part = response.candidates?.[0]?.content?.parts?.[0];
+          if (part && part.inlineData) {
+            return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
           }
-          throw new Error("No image generated");
+          
+          throw new Error("No image data received from the model.");
         } catch (error) {
           console.error("Error generating image:", error);
           throw error; 
@@ -404,11 +408,14 @@
              }
           } catch (e) {
              console.error(e);
-             // Handle quota error specifically for better UX
-             if (e.message && e.message.includes("429")) {
-                 setError("Quota exceeded. Please wait a moment before trying again.");
+             const msg = e.message || JSON.stringify(e);
+             // Handle specific API errors for better UX
+             if (msg.includes("429") || msg.includes("quota")) {
+                 setError("Daily quota exceeded for free tier. Please try again later.");
+             } else if (msg.includes("400") && msg.includes("billed")) {
+                 setError("This feature requires a billed API account.");
              } else {
-                 setError("Failed to generate image. Please try a different prompt.");
+                 setError("Failed to generate image. Please try again with a different prompt.");
              }
           } finally {
              setIsLoading(false);
@@ -425,7 +432,7 @@
                       onClick={() => {
                         const link = document.createElement('a');
                         link.href = imageUrl;
-                        link.download = `lime-ai-${Date.now()}.jpg`;
+                        link.download = `lime-ai-${Date.now()}.png`;
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
@@ -438,7 +445,7 @@
                     </button>
                  </div>
               ) : (
-                 <div className="flex flex-col items-center justify-center text-gray-400 space-y-4 p-12 border-4 border-dashed border-gray-200 rounded-3xl">
+                 <div className="flex flex-col items-center justify-center text-gray-400 space-y-4 p-12 border-4 border-dashed border-gray-200 rounded-3xl text-center">
                     {isLoading ? (
                        <div className="w-16 h-16 border-8 border-gray-200 border-t-[#ccff00] rounded-full animate-spin"></div>
                     ) : (
@@ -446,7 +453,8 @@
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <p className="text-xl font-bold">Your imagination awaits</p>
+                        <p className="text-xl font-bold">Imagine something...</p>
+                        <p className="text-sm opacity-70">Powered by Gemini Flash</p>
                        </>
                     )}
                  </div>
