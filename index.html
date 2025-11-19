@@ -6,7 +6,7 @@
     <meta name="description" content="lime.ai - Minimalist AI Interface" />
     <title>lime.ai</title>
     
-    <!-- Website Logo / Favicon (Scalable SVG handles 16x16, 48x48, 128x128 automatically) -->
+    <!-- Website Logo / Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23ccff00' stroke='black' stroke-width='8'/%3E%3Cpath d='M25 25C35 15 50 15 60 20' stroke='black' stroke-width='6' stroke-linecap='round' opacity='0.3'/%3E%3Ccircle cx='65' cy='45' r='8' fill='black'/%3E%3Cpath d='M35 65 Q50 75 65 65' stroke='black' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
 
     <!-- Tailwind CSS -->
@@ -19,19 +19,63 @@
     <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- PrismJS for Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
     <!-- Font: Fredoka -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap" rel="stylesheet">
 
     <style>
+      /* STRICT FONT ENFORCEMENT */
+      * {
+        font-family: 'Fredoka', sans-serif !important;
+      }
+      
+      /* CSS Variables for Theming */
+      :root {
+        --bg-color: #ffffff;
+        --text-color: #000000;
+        --accent-color: #ccff00;
+        --secondary-bg: #f9fafb;
+        --border-color: #000000;
+        --bubble-user-bg: #ccff00;
+        --bubble-user-text: #000000;
+        --bubble-ai-bg: #000000;
+        --bubble-ai-text: #ffffff;
+      }
+
+      [data-theme="dark"] {
+        --bg-color: #121212;
+        --text-color: #ffffff;
+        --accent-color: #ccff00;
+        --secondary-bg: #1e1e1e;
+        --border-color: #ffffff;
+        --bubble-user-bg: #ccff00;
+        --bubble-user-text: #000000;
+        --bubble-ai-bg: #2d2d2d;
+        --bubble-ai-text: #ffffff;
+      }
+
       html, body {
         height: 100%;
         width: 100%;
         margin: 0;
         padding: 0;
-        font-family: 'Fredoka', sans-serif;
-        background-color: #ffffff;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        transition: background-color 0.3s, color 0.3s;
       }
       #root {
         height: 100%;
@@ -44,18 +88,67 @@
           scrollbar-width: none;
       }
       .vibe-btn.active {
-        background-color: #ccff00;
+        background-color: var(--accent-color);
         color: black;
-        box-shadow: 3px 3px 0px 0px rgba(0,0,0,1);
+        box-shadow: 3px 3px 0px 0px var(--border-color);
+        border-color: var(--border-color);
       }
       
-      /* Message Bubble Animation */
+      /* Markdown Styles */
+      .markdown-body p { margin-bottom: 0.5em; }
+      .markdown-body pre { margin: 0.5rem 0; border-radius: 8px; overflow-x: auto; border: 1px solid #444; }
+      .markdown-body code { background: rgba(128,128,128,0.2); padding: 2px 4px; border-radius: 4px; }
+      .markdown-body ul { list-style-type: disc; padding-left: 20px; }
+      .markdown-body ol { list-style-type: decimal; padding-left: 20px; }
+      .markdown-body strong { font-weight: 700; }
+      .markdown-body a { text-decoration: underline; color: var(--accent-color); }
+      
+      /* Animation */
       @keyframes messagePop {
         0% { opacity: 0; transform: translateY(20px) scale(0.95); }
         100% { opacity: 1; transform: translateY(0) scale(1); }
       }
       .animate-pop {
         animation: messagePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+      @keyframes pulse-dot {
+        0% { transform: scale(0.95); opacity: 0.5; }
+        50% { transform: scale(1.05); opacity: 1; }
+        100% { transform: scale(0.95); opacity: 0.5; }
+      }
+      .animate-pulse-dot {
+        animation: pulse-dot 2s infinite ease-in-out;
+      }
+      
+      /* Slider Styling */
+      input[type=range] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        border: 2px solid var(--border-color);
+        cursor: pointer;
+        margin-top: -8px; 
+      }
+      input[type=range]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        cursor: pointer;
+        background: var(--border-color);
+        border-radius: 2px;
+      }
+
+      /* Print Styles (PDF Export) */
+      @media print {
+        header, .input-area, .settings-btn, .vibe-selector, .tools-bar { display: none !important; }
+        body { background: white; color: black; }
+        .markdown-body { font-size: 12pt; }
+        .message-bubble { border: 1px solid #ccc; break-inside: avoid; }
       }
     </style>
     
@@ -76,8 +169,6 @@
       import { GoogleGenAI } from "@google/genai";
 
       console.log("lime.ai Service Initializing...");
-
-      // API Key embedded for immediate functionality
       const API_KEY = "AIzaSyBAnKFv0b874M5ofplpPMDLWWPSGdt4Kjg";
 
       const getGenAIClient = () => {
@@ -91,95 +182,237 @@
         tech: "You are a senior software engineer. Focus purely on code, technical accuracy, and best practices. Be brief."
       };
 
-      const generateAnswer = async (prompt, history, vibe = 'fresh') => {
+      /**
+       * generateAnswer
+       */
+      const generateAnswer = async (prompt, history, vibe = 'fresh', base64Image = null, temperature = 1.0, useSearch = false, language = 'English') => {
         try {
           const ai = getGenAIClient();
           
-          // Inject the personality (vibe) as a system-like instruction at the start of the context
+          const langInstruction = language !== 'English' ? ` Please respond in ${language}.` : '';
           const systemInstruction = { 
             role: 'user', 
-            parts: [{ text: `System Instruction: ${PROMPTS[vibe] || PROMPTS.fresh}. Response directly to the user's next message.` }] 
+            parts: [{ text: `System Instruction: ${PROMPTS[vibe] || PROMPTS.fresh}.${langInstruction}` }] 
           };
 
-          // Combine: System Instruction -> History -> New Prompt
+          // Construct the current user turn
+          const currentParts = [{ text: prompt }];
+          if (base64Image) {
+            currentParts.unshift({
+                inlineData: {
+                    mimeType: "image/jpeg",
+                    data: base64Image.split(',')[1]
+                }
+            });
+          }
+
+          const validHistory = history.map(h => ({
+             role: h.role === 'user' ? 'user' : 'model',
+             parts: h.parts || [{ text: h.content }]
+          }));
+
           const contents = [
             systemInstruction, 
-            ...history, 
-            { role: 'user', parts: [{ text: prompt }] }
+            ...validHistory, 
+            { role: 'user', parts: currentParts }
           ];
+
+          const config = {
+            temperature: parseFloat(temperature),
+          };
+
+          if (useSearch) {
+             config.tools = [{ googleSearch: {} }];
+          }
 
           const response = await ai.models.generateContent({
               model: 'gemini-2.5-flash',
               contents: contents,
+              config: config
           });
           
           return response.text;
         } catch (error) {
           console.error("Error generating answer:", error);
-          return "Sorry, I couldn't process that request. Please try again.";
+          return "Sorry, I encountered an error. Please try again.";
         }
       };
 
-      // Expose functions to global window object
       window.geminiService = {
         generateAnswer
       };
-
-      console.log("lime.ai Service attached to window");
     </script>
 
     <!-- 2. APP LOGIC (Inlined) -->
     <script type="text/babel">
       const { useState, useEffect, createContext, useContext, useRef } = React;
 
-      // --- Authentication Hook ---
+      // --- Settings Context ---
+      const SettingsContext = createContext(undefined);
 
+      const SettingsProvider = ({ children }) => {
+        const [soundEnabled, setSoundEnabled] = useState(() => JSON.parse(localStorage.getItem('lime_sound') ?? 'true'));
+        const [animationIntensity, setAnimationIntensity] = useState(() => localStorage.getItem('lime_animation') || 'high');
+        const [theme, setTheme] = useState(() => localStorage.getItem('lime_theme') || 'light');
+        const [temperature, setTemperature] = useState(() => parseFloat(localStorage.getItem('lime_temp') || '1.0'));
+        const [searchEnabled, setSearchEnabled] = useState(() => JSON.parse(localStorage.getItem('lime_search') ?? 'false'));
+        const [favorites, setFavorites] = useState(() => JSON.parse(localStorage.getItem('lime_favorites') ?? '[]'));
+        
+        // New Features
+        const [language, setLanguage] = useState(() => localStorage.getItem('lime_lang') || 'English');
+        const [userAvatar, setUserAvatar] = useState(() => localStorage.getItem('lime_avatar') || '🍋');
+        const [textSize, setTextSize] = useState(() => parseInt(localStorage.getItem('lime_textsize') || '16'));
+
+        useEffect(() => {
+          document.documentElement.setAttribute('data-theme', theme);
+          localStorage.setItem('lime_theme', theme);
+          document.body.style.fontSize = `${textSize}px`;
+        }, [theme, textSize]);
+
+        useEffect(() => {
+            localStorage.setItem('lime_sound', JSON.stringify(soundEnabled));
+            localStorage.setItem('lime_animation', animationIntensity);
+            localStorage.setItem('lime_temp', temperature);
+            localStorage.setItem('lime_search', JSON.stringify(searchEnabled));
+            localStorage.setItem('lime_favorites', JSON.stringify(favorites));
+            localStorage.setItem('lime_lang', language);
+            localStorage.setItem('lime_avatar', userAvatar);
+            localStorage.setItem('lime_textsize', textSize);
+        }, [soundEnabled, animationIntensity, temperature, searchEnabled, favorites, language, userAvatar, textSize]);
+
+        const toggleFavorite = (msg) => {
+            const exists = favorites.some(f => f.timestamp === msg.timestamp);
+            if (exists) {
+                setFavorites(favorites.filter(f => f.timestamp !== msg.timestamp));
+            } else {
+                setFavorites([...favorites, msg]);
+            }
+        };
+
+        const playSound = (type = 'send') => {
+          if (!soundEnabled) return;
+          try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            if (type === 'send') {
+                osc.frequency.setValueAtTime(600, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.1);
+            } else if (type === 'receive') {
+                osc.frequency.setValueAtTime(400, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.15);
+            } else if (type === 'click') {
+                osc.frequency.setValueAtTime(800, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.05);
+            }
+            
+            gain.gain.setValueAtTime(0.05, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (type==='receive'?0.15:0.1));
+            osc.start();
+            osc.stop(ctx.currentTime + 0.2);
+          } catch (e) {}
+        };
+
+        const exportData = () => {
+            const data = {
+                history: localStorage.getItem('lime_chat_history'),
+                favorites: favorites,
+                settings: { theme, soundEnabled, animationIntensity, temperature, language, userAvatar, textSize }
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lime-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
+
+        const importData = (file) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.history) localStorage.setItem('lime_chat_history', data.history);
+                    if (data.favorites) setFavorites(data.favorites);
+                    if (data.settings) {
+                        setTheme(data.settings.theme || 'light');
+                        setSoundEnabled(data.settings.soundEnabled ?? true);
+                        setTemperature(data.settings.temperature || 1.0);
+                        setLanguage(data.settings.language || 'English');
+                        setUserAvatar(data.settings.userAvatar || '🍋');
+                        setTextSize(data.settings.textSize || 16);
+                    }
+                    alert("Data imported successfully! Refreshing...");
+                    window.location.reload();
+                } catch (err) {
+                    alert("Invalid backup file.");
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        return (
+          <SettingsContext.Provider value={{ 
+            soundEnabled, setSoundEnabled, 
+            animationIntensity, setAnimationIntensity,
+            theme, setTheme,
+            temperature, setTemperature,
+            searchEnabled, setSearchEnabled,
+            favorites, toggleFavorite,
+            language, setLanguage,
+            userAvatar, setUserAvatar,
+            textSize, setTextSize,
+            playSound, exportData, importData
+          }}>
+            {children}
+          </SettingsContext.Provider>
+        );
+      };
+
+      const useSettings = () => {
+        const context = useContext(SettingsContext);
+        if (!context) throw new Error('useSettings must be used within Provider');
+        return context;
+      };
+
+      // --- Auth Hook ---
       const AuthContext = createContext(undefined);
-
       const AuthProvider = ({ children }) => {
         const [user, setUser] = useState(null);
         const [isLoading, setIsLoading] = useState(true);
 
         useEffect(() => {
-          const storedUserRaw = localStorage.getItem('lime-ai-user');
-          if (storedUserRaw) {
-            try {
-              const parsed = JSON.parse(storedUserRaw);
-              if (parsed && parsed.username) {
-                setUser(parsed);
-              } else {
-                localStorage.removeItem('lime-ai-user');
-              }
-            } catch (e) {
-              localStorage.removeItem('lime-ai-user');
-            }
+          const stored = localStorage.getItem('lime-ai-user');
+          if (stored) {
+             try { setUser(JSON.parse(stored)); } catch (e) {}
           }
           setIsLoading(false);
         }, []);
 
         const login = (username, pass) => {
-          const storedCreds = localStorage.getItem(`lime_user_${username}`);
-          if (storedCreds) {
-            const creds = JSON.parse(storedCreds);
-            if (creds.password === pass) {
-              const loggedInUser = { username };
-              setUser(loggedInUser);
-              localStorage.setItem('lime-ai-user', JSON.stringify(loggedInUser));
-              return true;
-            }
+          const stored = localStorage.getItem(`lime_user_${username}`);
+          if (stored && JSON.parse(stored).password === pass) {
+            const u = { username };
+            setUser(u);
+            localStorage.setItem('lime-ai-user', JSON.stringify(u));
+            return true;
           }
           return false;
         };
 
         const signup = (username, pass) => {
-          if (localStorage.getItem(`lime_user_${username}`)) {
-            return false; // User already exists
-          }
-          const newUserCreds = { password: pass };
-          localStorage.setItem(`lime_user_${username}`, JSON.stringify(newUserCreds));
-          const newUser = { username };
-          setUser(newUser);
-          localStorage.setItem('lime-ai-user', JSON.stringify(newUser));
+          if (localStorage.getItem(`lime_user_${username}`)) return false;
+          localStorage.setItem(`lime_user_${username}`, JSON.stringify({ password: pass }));
+          const u = { username };
+          setUser(u);
+          localStorage.setItem('lime-ai-user', JSON.stringify(u));
           return true;
         };
 
@@ -194,317 +427,506 @@
           </AuthContext.Provider>
         );
       };
+      const useAuth = () => useContext(AuthContext);
 
-      const useAuth = () => {
-        const context = useContext(AuthContext);
-        if (context === undefined) {
-          throw new Error('useAuth must be used within an AuthProvider');
-        }
-        return context;
-      };
-
-      // --- Components ---
+      // --- UI Components ---
 
       const Logo = ({ size = "text-4xl", iconSize = 40, showText = true }) => (
         <div className="flex items-center gap-3 select-none">
           <div className="relative group">
-             {/* The Lime Icon: A stylized geometric lime with an 'eye' */}
-             <svg width={iconSize} height={iconSize} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-transform group-hover:rotate-12">
-                {/* Main Lime Body */}
-                <circle cx="50" cy="50" r="45" fill="#ccff00" stroke="black" strokeWidth="8" />
-                
-                {/* Reflection/Shine */}
-                <path d="M25 25C35 15 50 15 60 20" stroke="black" strokeWidth="6" strokeLinecap="round" className="opacity-30" />
-                
-                {/* The 'Eye' / Spark - Represents AI */}
+             <svg width={iconSize} height={iconSize} viewBox="0 0 100 100" fill="none" className="transition-transform group-hover:rotate-12">
+                <circle cx="50" cy="50" r="45" fill="var(--accent-color)" stroke="var(--border-color)" strokeWidth="8" />
+                <path d="M25 25C35 15 50 15 60 20" stroke="var(--border-color)" strokeWidth="6" strokeLinecap="round" className="opacity-30" />
                 <circle cx="65" cy="45" r="8" fill="black" />
-                
-                {/* Smile / Slice */}
-                <path d="M35 65 Q50 75 65 65" stroke="black" strokeWidth="6" strokeLinecap="round" />
+                <path d="M35 65 Q50 75 65 65" stroke="var(--border-color)" strokeWidth="6" strokeLinecap="round" />
              </svg>
           </div>
           {showText && (
-            <h1 className={`${size} font-black tracking-tighter text-black`}>
-              lime<span className="text-[#ccff00] stroke-black" style={{ WebkitTextStroke: '1px black' }}>.</span>ai
+            <h1 className={`${size} font-black tracking-tighter`} style={{ color: 'var(--text-color)' }}>
+              lime<span style={{ color: 'var(--accent-color)', WebkitTextStroke: '1px var(--border-color)' }}>.</span>ai
             </h1>
           )}
         </div>
       );
 
-      const AuthPage = () => {
-        const [isLogin, setIsLogin] = useState(true);
-        const [username, setUsername] = useState('');
-        const [password, setPassword] = useState('');
-        const [error, setError] = useState('');
-        const { login, signup } = useAuth();
+      // Prompt Library Data
+      const PROMPT_LIBRARY = {
+          "Creative": ["Write a poem about coding.", "Generate 5 startup ideas.", "Write a short sci-fi story."],
+          "Technical": ["Explain React hooks.", "Write a Python script to scrape a website.", "Debug this code:"],
+          "Business": ["Write a professional email.", "Draft a marketing plan.", "Summarize this meeting notes."],
+          "Fun": ["Roast my music taste.", "Tell me a dad joke.", "Give me a random fun fact."]
+      };
 
-        const handleSubmit = (e) => {
-          e.preventDefault();
-          setError('');
+      const MessageBubble = ({ msg, onEdit, onRegenerate }) => {
+        const { favorites, toggleFavorite, animationIntensity, userAvatar } = useSettings();
+        const [copied, setCopied] = useState(false);
+        const [reacted, setReacted] = useState(false);
+        const isUser = msg.role === 'user';
+        const isFav = favorites.some(f => f.timestamp === msg.timestamp);
 
-          if (isLogin) {
-            const success = login(username, password);
-            if (!success) {
-              setError('Invalid username or password.');
-            }
-          } else {
-            const success = signup(username, password);
-            if (!success) {
-              setError('An account with this username already exists.');
-            }
-          }
+        useEffect(() => {
+            if (window.Prism) window.Prism.highlightAll();
+        }, [msg.content]);
+
+        const htmlContent = React.useMemo(() => marked.parse(msg.content), [msg.content]);
+
+        const handleSpeak = () => {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(msg.content);
+            window.speechSynthesis.speak(utterance);
+        };
+
+        const handleCopy = () => {
+            navigator.clipboard.writeText(msg.content).then(() => {
+                setCopied(true); setTimeout(() => setCopied(false), 2000);
+            });
         };
 
         return (
-          <div className="flex items-center justify-center min-h-screen bg-white selection:bg-[#ccff00] selection:text-black font-['Fredoka']">
-            <div className="w-full max-w-sm p-8 border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white">
-              <div className="flex flex-col items-center mb-8">
-                <Logo size="text-6xl" iconSize={80} />
-                <div className="h-2 w-24 bg-[#ccff00] mx-auto rounded-full border border-black mt-6"></div>
-                <p className="text-black mt-4 font-semibold text-lg tracking-wide uppercase">
-                  {isLogin ? 'Welcome Back' : 'Create Account'}
-                </p>
+          <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} ${animationIntensity !== 'off' ? 'animate-pop' : ''} mb-6 group message-bubble`}>
+            <div 
+                onDoubleClick={() => setReacted(!reacted)}
+                className={`relative max-w-[90%] md:max-w-[80%] px-6 py-4 text-lg font-medium shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transition-all duration-200 border-2 border-[var(--border-color)] rounded-3xl ${
+                isUser 
+                    ? 'rounded-tr-none bg-[var(--bubble-user-bg)] text-[var(--bubble-user-text)]' 
+                    : 'rounded-tl-none bg-[var(--bubble-ai-bg)] text-[var(--bubble-ai-text)]'
+                }`}
+            >
+              {/* Reaction Badge */}
+              {reacted && <div className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-sm z-10">❤️</div>}
+
+              {/* User Avatar */}
+              {isUser && <div className="absolute -top-8 right-0 text-2xl">{userAvatar}</div>}
+              {!isUser && <div className="absolute -top-8 left-0 text-2xl">🤖</div>}
+
+              {/* Image Attachment */}
+              {msg.image && (
+                <img src={msg.image} alt="Attachment" className="max-h-48 rounded-lg border border-black mb-3" />
+              )}
+              
+              {/* Content */}
+              <div className="markdown-body leading-relaxed overflow-x-auto" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+
+              {/* Metadata */}
+              <div className={`text-[10px] opacity-50 mt-2 flex gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
+                  <span>{new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                  {isUser && <span>• {msg.content.split(' ').length} words</span>}
               </div>
-              
-              <form className="space-y-5" onSubmit={handleSubmit}>
-                <div className="space-y-1">
-                  <input
-                    type="text"
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    className="block w-full px-5 py-4 text-black bg-white border-2 border-black rounded-xl focus:outline-none focus:shadow-[4px_4px_0px_0px_#ccff00] transition-all placeholder-gray-400 font-bold text-lg"
-                    placeholder="Username"
-                  />
-                </div>
-                <div className="space-y-1">
-                   <input
-                    type="password"
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="block w-full px-5 py-4 text-black bg-white border-2 border-black rounded-xl focus:outline-none focus:shadow-[4px_4px_0px_0px_#ccff00] transition-all placeholder-gray-400 font-bold text-lg"
-                    placeholder="Password"
-                  />
-                </div>
-                
-                {error && (
-                  <div className="p-3 bg-black text-[#ccff00] rounded-lg text-center border-2 border-black">
-                    <p className="text-sm font-bold">{error}</p>
-                  </div>
-                )}
-                
-                <button type="submit" className="w-full py-4 font-black text-xl text-black bg-[#ccff00] border-2 border-black rounded-xl hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all">
-                  {isLogin ? 'SIGN IN' : 'SIGN UP'}
-                </button>
-              </form>
-              
-              <div className="mt-8 text-center">
-                <button 
-                  onClick={() => { setIsLogin(!isLogin); setError(''); }} 
-                  className="text-base font-bold text-gray-400 hover:text-black underline decoration-4 decoration-[#ccff00] underline-offset-4 transition-colors"
-                >
-                  {isLogin ? "Don't have an account? Join" : 'Already a member? Login'}
-                </button>
+
+              {/* Action Bar */}
+              <div className={`absolute -bottom-8 ${isUser ? 'right-0' : 'left-0'} flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20`}>
+                 <button onClick={handleCopy} title="Copy" className="p-1.5 bg-[var(--bg-color)] border border-[var(--border-color)] rounded-full text-[var(--text-color)] hover:bg-[var(--accent-color)]">
+                    {copied ? "✓" : "📋"}
+                 </button>
+                 {isUser && (
+                     <button onClick={onEdit} title="Edit" className="p-1.5 bg-[var(--bg-color)] border border-[var(--border-color)] rounded-full text-[var(--text-color)] hover:bg-[var(--accent-color)]">✏️</button>
+                 )}
+                 {!isUser && (
+                     <>
+                        <button onClick={handleSpeak} title="Read Aloud" className="p-1.5 bg-[var(--bg-color)] border border-[var(--border-color)] rounded-full text-[var(--text-color)] hover:bg-[var(--accent-color)]">🔊</button>
+                        <button onClick={() => toggleFavorite(msg)} title="Favorite" className={`p-1.5 bg-[var(--bg-color)] border border-[var(--border-color)] rounded-full hover:bg-[var(--accent-color)] ${isFav ? 'text-red-500' : 'text-[var(--text-color)]'}`}>
+                            {isFav ? "♥" : "♡"}
+                        </button>
+                        <button onClick={onRegenerate} title="Regenerate" className="p-1.5 bg-[var(--bg-color)] border border-[var(--border-color)] rounded-full text-[var(--text-color)] hover:bg-[var(--accent-color)]">🔄</button>
+                     </>
+                 )}
               </div>
             </div>
           </div>
         );
       };
 
+      const PromptLibraryModal = ({ onClose, onSelect }) => {
+          return (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-[var(--bg-color)] border-4 border-[var(--border-color)] rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+                      <div className="p-4 border-b-2 border-[var(--border-color)] flex justify-between items-center bg-[var(--secondary-bg)]">
+                          <h3 className="font-black text-xl">Prompt Library</h3>
+                          <button onClick={onClose} className="font-bold text-red-500">Close</button>
+                      </div>
+                      <div className="p-4 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {Object.entries(PROMPT_LIBRARY).map(([category, prompts]) => (
+                              <div key={category}>
+                                  <h4 className="font-bold text-[var(--accent-color)] bg-black inline-block px-2 rounded mb-2">{category}</h4>
+                                  <div className="space-y-2">
+                                      {prompts.map((p, i) => (
+                                          <button key={i} onClick={() => onSelect(p)} className="w-full text-left p-2 border border-[var(--border-color)] rounded-lg hover:bg-[var(--accent-color)] hover:text-black text-sm transition-colors">
+                                              {p}
+                                          </button>
+                                      ))}
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+              </div>
+          );
+      };
+
       const QAPanel = () => {
-        // Initial state tries to load from localStorage
-        const [messages, setMessages] = useState(() => {
-            const saved = localStorage.getItem('lime_chat_history');
-            return saved ? JSON.parse(saved) : [
-                { role: 'model', content: "Hello! I'm lime.ai. Select a vibe and let's chat!" }
-            ];
-        });
+        const { playSound, temperature, searchEnabled, language } = useSettings();
+        const [messages, setMessages] = useState(() => JSON.parse(localStorage.getItem('lime_chat_history') ?? '[]'));
         const [input, setInput] = useState('');
-        const [isLoading, setIsLoading] = useState(false);
         const [vibe, setVibe] = useState('fresh');
+        const [isLoading, setIsLoading] = useState(false);
+        const [selectedImage, setSelectedImage] = useState(null);
+        const [isListening, setIsListening] = useState(false);
+        const [showPromptLib, setShowPromptLib] = useState(false);
+        const [focusMode, setFocusMode] = useState(false);
+        const [autoScroll, setAutoScroll] = useState(true);
+        
+        // Session Timer
+        const [sessionTime, setSessionTime] = useState(0);
+        useEffect(() => {
+            const timer = setInterval(() => setSessionTime(t => t + 1), 1000);
+            return () => clearInterval(timer);
+        }, []);
+
+        const fileInputRef = useRef(null);
         const messagesEndRef = useRef(null);
 
-        // Auto-save messages whenever they change
         useEffect(() => {
             localStorage.setItem('lime_chat_history', JSON.stringify(messages));
+            if (autoScroll) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, [messages, autoScroll]);
+
+        // Confetti
+        useEffect(() => {
+            if (messages.length > 0 && messages[messages.length-1].role === 'user') {
+                const txt = messages[messages.length-1].content.toLowerCase();
+                if (txt.includes('thank') || txt.includes('great job')) {
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                }
+            }
         }, [messages]);
 
-        const scrollToBottom = () => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        };
-
-        useEffect(scrollToBottom, [messages]);
-
         const handleSend = async (text = input) => {
-          if (!text.trim() || isLoading) return;
+          if ((!text.trim() && !selectedImage) || isLoading) return;
+          playSound('send');
 
-          const userMessage = { role: 'user', content: text };
-          setMessages((prev) => [...prev, userMessage]);
+          const userMsg = { role: 'user', content: text, image: selectedImage, timestamp: Date.now() };
+          setMessages(prev => [...prev, userMsg]);
           setInput('');
+          setSelectedImage(null);
           setIsLoading(true);
 
-          // Prepare history without the system instruction (that happens in service)
-          const history = messages.map(msg => ({
-              role: msg.role,
-              parts: [{ text: msg.content }]
-          }));
-
           try {
-            if (window.geminiService && window.geminiService.generateAnswer) {
-                const response = await window.geminiService.generateAnswer(text, history, vibe);
-                const modelMessage = { role: 'model', content: response };
-                setMessages((prev) => [...prev, modelMessage]);
-            } else {
-                throw new Error("Service not available");
-            }
+             const history = messages.map(m => ({ role: m.role, content: m.content }));
+             const res = await window.geminiService.generateAnswer(text, history, vibe, userMsg.image, temperature, searchEnabled, language);
+             
+             playSound('receive');
+             setMessages(prev => [...prev, { role: 'model', content: res, timestamp: Date.now() }]);
           } catch (e) {
-            console.error(e);
-            setMessages((prev) => [...prev, { role: 'model', content: "I encountered an issue connecting to the service. Please try refreshing." }]);
+             setMessages(prev => [...prev, { role: 'model', content: "Error: " + e.message, timestamp: Date.now() }]);
           }
           setIsLoading(false);
         };
 
-        const handleDownload = () => {
-            if (messages.length <= 1) return;
-            
-            const textContent = messages.map(msg => {
-                const role = msg.role === 'user' ? 'YOU' : 'LIME.AI';
-                return `${role}:\n${msg.content}\n${'-'.repeat(20)}\n`;
-            }).join('\n');
-
-            const blob = new Blob([textContent], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const date = new Date().toISOString().split('T')[0];
-            a.download = `lime-chat-${date}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+        const handleEdit = (index) => {
+            const msg = messages[index];
+            setInput(msg.content);
+            setMessages(prev => prev.slice(0, index)); // Remove this and subsequent messages
         };
 
-        const handleClear = () => {
-            if (window.confirm("Are you sure you want to delete this chat history?")) {
-                setMessages([{ role: 'model', content: "Chat cleared. How can I help you now?" }]);
+        const handleRegenerate = () => {
+            const lastUserIndex = messages.findLastIndex(m => m.role === 'user');
+            if (lastUserIndex !== -1) {
+                const lastUserMsg = messages[lastUserIndex];
+                setMessages(prev => prev.slice(0, lastUserIndex + 1)); // Keep up to user msg
+                setIsLoading(true);
+                window.geminiService.generateAnswer(lastUserMsg.content, messages.slice(0, lastUserIndex), vibe, lastUserMsg.image, temperature, searchEnabled, language)
+                    .then(res => {
+                        playSound('receive');
+                        setMessages(prev => [...prev, { role: 'model', content: res, timestamp: Date.now() }]);
+                        setIsLoading(false);
+                    });
             }
         };
 
-        const VibeButton = ({ id, label, icon }) => (
-            <button 
-                onClick={() => setVibe(id)}
-                className={`vibe-btn px-4 py-2 rounded-lg font-bold border-2 border-black transition-all flex items-center gap-2 ${vibe === id ? 'active' : 'bg-white text-gray-400 border-gray-200 hover:border-black hover:text-black'}`}
-            >
-                <span>{icon}</span>
-                <span className="uppercase tracking-wider text-sm">{label}</span>
-            </button>
-        );
+        const toggleVoice = () => {
+            if (isListening) return; 
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return alert("Browser doesn't support speech.");
+            
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.onstart = () => setIsListening(true);
+            recognition.onend = () => setIsListening(false);
+            recognition.onresult = (e) => {
+                const transcript = e.results[0][0].transcript;
+                setInput(prev => prev + " " + transcript);
+            };
+            recognition.start();
+        };
 
-        const QuickPrompt = ({ text }) => (
-            <button 
-                onClick={() => handleSend(text)}
-                disabled={isLoading}
-                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm font-bold text-gray-600 hover:bg-black hover:text-[#ccff00] hover:border-black transition-all whitespace-nowrap"
-            >
-                {text}
-            </button>
-        );
+        const handleRandomVibe = () => {
+            const vibes = ['fresh', 'sour', 'zest', 'tech'];
+            setVibe(vibes[Math.floor(Math.random() * vibes.length)]);
+            confetti({ particleCount: 50, spread: 40 });
+        };
+
+        const handleClear = () => {
+            if (confirm("Clear Chat?")) setMessages([]);
+        };
+
+        const formatTime = (s) => {
+            const m = Math.floor(s / 60);
+            const sec = s % 60;
+            return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+        };
+
+        // Lime Juice Meter (Mock Quota)
+        const limeJuice = Math.max(0, 100 - (messages.length * 2));
 
         return (
-          <div className="flex flex-col h-full max-w-4xl mx-auto w-full px-4 font-['Fredoka']">
-            
-            {/* Top Bar: Vibe Selector & Actions */}
-            <div className="py-4 flex flex-col md:flex-row gap-4 md:items-center justify-between border-b border-dashed border-gray-300">
-                <div className="flex gap-2 overflow-x-auto no-scrollbar justify-center md:justify-start">
-                    <VibeButton id="fresh" label="Fresh" icon="🍋" />
-                    <VibeButton id="sour" label="Sour" icon="😝" />
-                    <VibeButton id="zest" label="Zest" icon="✨" />
-                    <VibeButton id="tech" label="Tech" icon="💻" />
+          <div className={`flex flex-col h-full max-w-5xl mx-auto w-full px-4 pb-6 transition-all ${focusMode ? 'fixed inset-0 z-50 bg-[var(--bg-color)] p-6' : ''}`}>
+             {showPromptLib && <PromptLibraryModal onClose={() => setShowPromptLib(false)} onSelect={(t) => { setInput(t); setShowPromptLib(false); }} />}
+             
+             {/* Header / Stats */}
+             <div className={`flex justify-between items-center py-2 text-xs font-bold opacity-60 border-b border-[var(--border-color)] mb-2 ${focusMode ? 'hidden' : ''}`}>
+                 <div className="flex gap-4">
+                     <span>⏱ Session: {formatTime(sessionTime)}</span>
+                     <span className="flex items-center gap-1">🔋 Juice: <div className="w-10 h-2 bg-gray-200 rounded-full overflow-hidden border border-black"><div className="h-full bg-[var(--accent-color)]" style={{width: `${limeJuice}%`}}></div></div></span>
+                     <span className="animate-pulse-dot text-green-500">● Online</span>
+                 </div>
+                 <div className="flex gap-2">
+                    <button onClick={() => { navigator.clipboard.writeText(JSON.stringify(messages)); alert('Chat Copied!'); }} className="hover:text-[var(--accent-color)]">Copy All</button>
+                    <button onClick={() => window.print()} className="hover:text-[var(--accent-color)]">PDF</button>
+                 </div>
+             </div>
+
+             {/* Toolbar */}
+             <div className={`py-2 flex flex-wrap gap-4 justify-between items-center ${focusMode ? 'absolute top-4 right-4 z-50' : ''}`}>
+                <div className={`flex gap-2 overflow-x-auto no-scrollbar ${focusMode ? 'hidden' : ''}`}>
+                   {['fresh', 'sour', 'zest', 'tech'].map(v => (
+                       <button key={v} onClick={() => setVibe(v)} className={`vibe-btn px-3 py-1.5 rounded-lg font-bold border-2 border-[var(--border-color)] uppercase text-sm ${vibe === v ? 'active' : 'opacity-50 hover:opacity-100'}`}>
+                          {v}
+                       </button>
+                   ))}
+                   <button onClick={handleRandomVibe} className="px-3 py-1.5 rounded-lg font-bold border-2 border-[var(--border-color)] bg-pink-200 text-black hover:scale-105">🎲</button>
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={() => setFocusMode(!focusMode)} className={`p-2 rounded-lg border-2 border-[var(--border-color)] ${focusMode ? 'bg-[var(--accent-color)]' : ''}`} title="Zen Mode">🧘</button>
+                    <button onClick={() => setAutoScroll(!autoScroll)} className={`p-2 rounded-lg border-2 border-[var(--border-color)] ${!autoScroll ? 'bg-red-200' : ''}`} title="Auto Scroll">⬇️</button>
+                    {!focusMode && <button onClick={handleClear} className="p-2 rounded-lg border-2 border-[var(--border-color)] hover:bg-red-500 hover:text-white transition-all" title="Clear">🗑</button>}
+                </div>
+             </div>
+
+             {/* Messages */}
+             <div className="flex-1 overflow-y-auto py-4 space-y-2 no-scrollbar relative">
+                {messages.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-full text-center opacity-50">
+                        <p className="text-3xl font-black mb-4">Ready to Squeeze?</p>
+                        <button onClick={() => handleSend("Tell me a random fun fact about limes.")} className="px-6 py-3 border-2 border-dashed border-[var(--border-color)] rounded-xl hover:bg-[var(--accent-color)] hover:border-solid font-bold transition-all">
+                            Get a Random Fact
+                        </button>
+                    </div>
+                )}
+                {messages.map((msg, i) => (
+                    <MessageBubble 
+                        key={i} 
+                        msg={msg} 
+                        onEdit={() => handleEdit(i)} 
+                        onRegenerate={handleRegenerate} 
+                    />
+                ))}
+                {isLoading && (
+                    <div className="flex justify-start animate-pop">
+                        <div className="px-6 py-5 bg-[var(--bubble-ai-bg)] border-2 border-[var(--border-color)] rounded-3xl rounded-tl-none">
+                            <span className="text-[var(--bubble-ai-text)] font-bold text-sm animate-pulse">Lime is thinking...</span>
+                        </div>
+                    </div>
+                )}
+                <div ref={messagesEndRef} />
+             </div>
+
+             {/* Input Area */}
+             <div className="input-area flex flex-col gap-3 mt-2">
+                 {/* Quick Prompts */}
+                 <div className={`flex gap-2 overflow-x-auto no-scrollbar pb-1 ${focusMode ? 'hidden' : ''}`}>
+                     <button onClick={() => setShowPromptLib(true)} className="px-3 py-1 text-xs font-bold bg-[var(--accent-color)] border border-[var(--border-color)] rounded-full whitespace-nowrap">📚 Library</button>
+                     {["Summarize text", "Generate Code", "Analyze Image", "Roast me"].map(t => (
+                         <button key={t} onClick={() => handleSend(t)} className="px-3 py-1 text-xs font-bold border border-[var(--border-color)] rounded-full hover:bg-[var(--text-color)] hover:text-[var(--bg-color)] whitespace-nowrap transition-colors">{t}</button>
+                     ))}
+                 </div>
+
+                 {/* Image Preview */}
+                 {selectedImage && (
+                     <div className="relative w-20 h-20">
+                         <img src={selectedImage} className="w-full h-full object-cover rounded-lg border-2 border-[var(--border-color)]" />
+                         <button onClick={() => setSelectedImage(null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">X</button>
+                     </div>
+                 )}
+
+                 {/* Main Input */}
+                 <div className="relative flex items-center bg-[var(--bg-color)] border-4 border-[var(--border-color)] rounded-full shadow-[6px_6px_0px_0px_var(--accent-color)] focus-within:shadow-[6px_6px_0px_0px_var(--text-color)] transition-all">
+                     <div className="flex items-center pl-3 gap-1">
+                         <button onClick={() => fileInputRef.current.click()} className="p-2 text-[var(--text-color)] hover:text-[var(--accent-color)]" title="Upload Image">📷</button>
+                         <button onClick={toggleVoice} className={`p-2 ${isListening ? 'text-red-500 animate-pulse' : 'text-[var(--text-color)] hover:text-[var(--accent-color)]'}`} title="Voice Input">🎤</button>
+                     </div>
+                     
+                     <input type="file" ref={fileInputRef} onChange={(e) => { if(e.target.files[0]) { const r = new FileReader(); r.onload=()=>setSelectedImage(r.result); r.readAsDataURL(e.target.files[0]); }}} hidden accept="image/*" />
+                     
+                     <input 
+                        type="text" 
+                        value={input} 
+                        onChange={e => setInput(e.target.value)} 
+                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                        placeholder={isListening ? "Listening..." : "Message lime.ai..."}
+                        className="w-full px-3 py-4 bg-transparent outline-none font-bold text-lg placeholder-gray-400"
+                        disabled={isLoading}
+                     />
+                     
+                     {/* Word Count */}
+                     <span className="text-[10px] font-bold opacity-30 whitespace-nowrap mr-2 hidden md:block">
+                         {input.length} chars
+                     </span>
+
+                     <button onClick={() => handleSend()} disabled={isLoading} className="mr-2 p-3 rounded-full bg-[var(--text-color)] text-[var(--accent-color)] hover:scale-105 transition-transform">
+                        ➜
+                     </button>
+                 </div>
+             </div>
+          </div>
+        );
+      };
+
+      const SettingsPage = ({ onClose }) => {
+          const { theme, setTheme, temperature, setTemperature, searchEnabled, setSearchEnabled, favorites, importData, exportData, language, setLanguage, userAvatar, setUserAvatar, textSize, setTextSize } = useSettings();
+          const fileInput = useRef(null);
+          
+          const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese', 'Hindi'];
+          const AVATARS = ['🍋', '😎', '🐱', '🚀', '👻', '💀', '👽', '🤖'];
+
+          return (
+              <div className="max-w-3xl mx-auto p-6 animate-pop pb-20">
+                  <div className="flex justify-between items-center mb-8">
+                      <h2 className="text-3xl font-black">Settings</h2>
+                      <button onClick={onClose} className="px-4 py-2 font-bold border-2 border-[var(--border-color)] rounded-lg hover:bg-[var(--text-color)] hover:text-[var(--bg-color)]">Done</button>
+                  </div>
+
+                  <div className="space-y-6">
+                      {/* Appearance */}
+                      <section className="p-6 border-2 border-[var(--border-color)] rounded-2xl bg-[var(--secondary-bg)]">
+                          <h3 className="text-xl font-bold mb-4">🎨 Appearance</h3>
+                          <div className="flex gap-4 mb-4">
+                              {['light', 'dark'].map(t => (
+                                  <button key={t} onClick={() => setTheme(t)} className={`flex-1 py-3 font-bold rounded-xl border-2 border-[var(--border-color)] capitalize ${theme === t ? 'bg-[var(--accent-color)] text-black' : ''}`}>
+                                      {t} Mode
+                                  </button>
+                              ))}
+                          </div>
+                          <div className="mb-4">
+                              <label className="font-bold block mb-2">Text Size: {textSize}px</label>
+                              <input type="range" min="12" max="24" value={textSize} onChange={e => setTextSize(e.target.value)} className="w-full" />
+                          </div>
+                          <div>
+                              <label className="font-bold block mb-2">User Avatar</label>
+                              <div className="flex gap-2">
+                                  {AVATARS.map(a => (
+                                      <button key={a} onClick={() => setUserAvatar(a)} className={`text-2xl p-2 rounded-lg border-2 ${userAvatar === a ? 'border-[var(--accent-color)] bg-black' : 'border-transparent'}`}>{a}</button>
+                                  ))}
+                              </div>
+                          </div>
+                      </section>
+
+                      {/* AI Brain */}
+                      <section className="p-6 border-2 border-[var(--border-color)] rounded-2xl bg-[var(--secondary-bg)]">
+                          <h3 className="text-xl font-bold mb-4">🧠 Intelligence</h3>
+                          <div className="space-y-4">
+                              <div>
+                                  <div className="flex justify-between mb-2 font-bold">
+                                      <label>Creativity (Temperature)</label>
+                                      <span>{temperature}</span>
+                                  </div>
+                                  <input type="range" min="0" max="2" step="0.1" value={temperature} onChange={e => setTemperature(e.target.value)} className="w-full" />
+                              </div>
+                              <div>
+                                  <label className="font-bold block mb-2">Language</label>
+                                  <select value={language} onChange={e => setLanguage(e.target.value)} className="w-full p-3 rounded-xl border-2 border-[var(--border-color)] bg-[var(--bg-color)] font-bold">
+                                      {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+                                  </select>
+                              </div>
+                              <div className="flex items-center justify-between p-3 border-2 border-[var(--border-color)] rounded-xl bg-[var(--bg-color)]">
+                                  <label className="font-bold flex items-center gap-2">🌍 Enable Google Search</label>
+                                  <input type="checkbox" checked={searchEnabled} onChange={e => setSearchEnabled(e.target.checked)} className="w-6 h-6 accent-[var(--accent-color)]" />
+                              </div>
+                          </div>
+                      </section>
+
+                      {/* Data */}
+                      <section className="p-6 border-2 border-[var(--border-color)] rounded-2xl bg-[var(--secondary-bg)]">
+                          <h3 className="text-xl font-bold mb-4">💾 Data</h3>
+                          <div className="flex gap-4">
+                              <button onClick={exportData} className="flex-1 py-3 font-bold border-2 border-[var(--border-color)] rounded-xl hover:bg-[var(--accent-color)]">Export Backup</button>
+                              <button onClick={() => fileInput.current.click()} className="flex-1 py-3 font-bold border-2 border-[var(--border-color)] rounded-xl hover:bg-[var(--accent-color)]">Import Backup</button>
+                              <input type="file" ref={fileInput} onChange={e => importData(e.target.files[0])} hidden accept=".json" />
+                          </div>
+                      </section>
+                  </div>
+              </div>
+          );
+      };
+
+      const AuthPage = () => {
+        const { login, signup } = useAuth();
+        const [isLogin, setIsLogin] = useState(true);
+        const [username, setUsername] = useState('');
+        const [password, setPassword] = useState('');
+        const [error, setError] = useState('');
+
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          setError('');
+          if (!username || !password) { setError('Please fill in all fields'); return; }
+          
+          if (isLogin) {
+            if (!login(username, password)) setError('Invalid credentials');
+          } else {
+            if (!signup(username, password)) setError('Username taken');
+          }
+        };
+
+        return (
+          <div className="flex items-center justify-center min-h-screen p-4 bg-[var(--secondary-bg)]">
+            <div className="w-full max-w-md p-8 bg-[var(--bg-color)] border-4 border-[var(--border-color)] rounded-3xl shadow-[8px_8px_0px_0px_var(--border-color)] animate-pop">
+              <div className="flex justify-center mb-8">
+                <Logo size="text-5xl" iconSize={60} />
+              </div>
+              
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className="block font-black mb-2 uppercase tracking-wide text-sm">Username</label>
+                  <input 
+                    type="text" 
+                    value={username} 
+                    onChange={e => setUsername(e.target.value)}
+                    className="w-full p-4 bg-[var(--bg-color)] border-2 border-[var(--border-color)] rounded-xl font-bold focus:outline-none focus:border-[var(--accent-color)] transition-colors"
+                    placeholder="Enter username"
+                  />
+                </div>
+                <div>
+                  <label className="block font-black mb-2 uppercase tracking-wide text-sm">Password</label>
+                  <input 
+                    type="password" 
+                    value={password} 
+                    onChange={e => setPassword(e.target.value)}
+                    className="w-full p-4 bg-[var(--bg-color)] border-2 border-[var(--border-color)] rounded-xl font-bold focus:outline-none focus:border-[var(--accent-color)] transition-colors"
+                    placeholder="Enter password"
+                  />
                 </div>
                 
-                <div className="flex gap-2 justify-center md:justify-end">
-                    <button onClick={handleDownload} title="Save Chat as Text" className="p-2 bg-white border-2 border-black rounded-lg hover:bg-black hover:text-[#ccff00] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                    </button>
-                    <button onClick={handleClear} title="Clear Chat History" className="p-2 bg-white border-2 border-black rounded-lg hover:bg-red-500 hover:text-white hover:border-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            {/* Chat Area */}
-            <div className="flex-1 overflow-y-auto space-y-6 py-8 no-scrollbar">
-              {messages.map((msg, index) => (
-                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-pop`}>
-                  <div className={`max-w-[85%] px-6 py-4 text-lg font-medium shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.2)] ${
-                    msg.role === 'user' 
-                      ? 'bg-[#ccff00] text-black border-2 border-black rounded-3xl rounded-tr-none' 
-                      : 'bg-black text-white border-2 border-black rounded-3xl rounded-tl-none'
-                  }`}>
-                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                  </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start animate-pop">
-                   <div className="px-6 py-5 rounded-3xl rounded-tl-none bg-black border-2 border-black">
-                      <div className="flex items-center space-x-2">
-                          <div className="w-2 h-2 bg-[#ccff00] rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                          <div className="w-2 h-2 bg-[#ccff00] rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                          <div className="w-2 h-2 bg-[#ccff00] rounded-full animate-bounce"></div>
-                      </div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} className="h-4" />
-            </div>
-            
-            {/* Bottom Area */}
-            <div className="pb-8 pt-2 flex flex-col gap-4">
+                {error && <p className="text-red-500 font-bold text-center">{error}</p>}
+                
+                <button type="submit" className="w-full py-4 bg-[var(--text-color)] text-[var(--bg-color)] font-black text-xl rounded-xl hover:scale-105 transition-transform">
+                  {isLogin ? 'LOGIN' : 'CREATE ACCOUNT'}
+                </button>
+              </form>
               
-              {/* Quick Prompts */}
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-                <QuickPrompt text="Tell me a joke" />
-                <QuickPrompt text="Give me a fun fact" />
-                <QuickPrompt text="Roast my music taste" />
-                <QuickPrompt text="Write a haiku" />
-                <QuickPrompt text="Life advice?" />
-              </div>
-
-              {/* Input Bar */}
-              <div className="relative group">
-                <div className="relative flex items-center bg-white border-4 border-black rounded-full shadow-[6px_6px_0px_0px_#ccff00] transition-all focus-within:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] focus-within:translate-x-[2px] focus-within:translate-y-[2px]">
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend();
-                      }
-                    }}
-                    placeholder={`Message lime.ai (${vibe} mode)...`}
-                    className="w-full pl-8 py-4 bg-transparent text-black placeholder-gray-400 focus:outline-none rounded-full font-bold text-xl"
-                    disabled={isLoading}
-                  />
-                  <button
-                    onClick={() => handleSend()}
-                    disabled={isLoading || !input.trim()}
-                    className="mr-3 p-3 rounded-full bg-black text-[#ccff00] hover:bg-[#ccff00] hover:text-black disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-all border-2 border-transparent hover:border-black"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
+              <div className="mt-6 text-center">
+                <button onClick={() => { setIsLogin(!isLogin); setError(''); }} className="font-bold hover:text-[var(--accent-color)] underline">
+                  {isLogin ? "New here? Sign up" : "Already have an account? Login"}
+                </button>
               </div>
             </div>
           </div>
@@ -513,70 +935,69 @@
 
       const MainApp = () => {
         const { user, logout } = useAuth();
+        const { playSound } = useSettings();
+        const [view, setView] = useState('chat'); // 'chat', 'settings'
+
+        useEffect(() => {
+            playSound('click');
+        }, [view]);
 
         return (
-          <div className="flex flex-col h-screen bg-white selection:bg-[#ccff00] selection:text-black font-['Fredoka']">
-            <header className="flex items-center justify-between px-8 py-6 bg-white border-b-4 border-black sticky top-0 z-10">
-              <div className="flex items-center gap-8">
-                <Logo size="text-3xl" iconSize={50} />
+          <div className="flex flex-col h-screen bg-[var(--secondary-bg)]">
+            {/* Navbar */}
+            <header className="flex justify-between items-center p-4 bg-[var(--bg-color)] border-b-2 border-[var(--border-color)]">
+              <div className="flex items-center gap-4">
+                  <div onClick={() => setView('chat')} className="cursor-pointer">
+                    <Logo size="text-2xl" iconSize={32} />
+                  </div>
               </div>
               
-              <div className="flex items-center gap-6">
-                <div className="hidden md:block text-sm font-black uppercase tracking-widest text-black bg-[#ccff00] px-3 py-1 rounded-md border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                  {user?.username}
-                </div>
-                <button
-                  onClick={logout}
-                  className="text-base font-bold text-black hover:text-[#ccff00] bg-black hover:bg-black px-4 py-2 rounded-lg transition-all border-2 border-black hover:shadow-[4px_4px_0px_0px_#ccff00] text-white"
-                >
-                  Sign Out
+              <div className="flex items-center gap-4">
+                <span className="font-bold hidden sm:block">Hi, {user.username}</span>
+                
+                <button onClick={() => setView(view === 'settings' ? 'chat' : 'settings')} className={`p-2 rounded-lg border-2 border-[var(--border-color)] hover:bg-[var(--accent-color)] ${view==='settings'?'bg-[var(--accent-color)]':''}`} title="Settings">
+                    ⚙️
+                </button>
+
+                <button onClick={logout} className="px-4 py-2 bg-black text-white font-bold rounded-lg border-2 border-transparent hover:bg-red-600 text-sm">
+                  EXIT
                 </button>
               </div>
             </header>
-            
-            <main className="flex-1 overflow-hidden flex flex-col relative bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
-              <QAPanel />
+
+            {/* Content */}
+            <main className="flex-1 overflow-hidden relative">
+              {view === 'chat' && <QAPanel />}
+              {view === 'settings' && <SettingsPage onClose={() => setView('chat')} />}
             </main>
           </div>
         );
       };
 
       const App = () => {
-        const { user, isLoading } = useAuth();
-
-        if (isLoading) {
-          return (
-            <div className="bg-white min-h-screen flex items-center justify-center">
-              <div className="flex flex-col items-center space-y-4">
-                <div className="w-20 h-20 border-8 border-black border-t-[#ccff00] rounded-full animate-spin"></div>
-              </div>
-            </div>
-          );
-        }
-
         return (
-          <div className="bg-white text-black min-h-screen font-sans antialiased">
-            {user ? <MainApp /> : <AuthPage />}
-          </div>
+          <AuthProvider>
+            <SettingsProvider>
+               <AppContent />
+            </SettingsProvider>
+          </AuthProvider>
         );
       };
 
-      // --- Mounting Logic ---
-      console.log("Mounting lime.ai...");
+      const AppContent = () => {
+        const { user, isLoading } = useAuth();
 
-      const rootElement = document.getElementById('root');
-      if (!rootElement) {
-        throw new Error("Could not find root element to mount to");
-      }
+        if (isLoading) return (
+            <div className="flex h-screen items-center justify-center bg-[var(--bg-color)]">
+                <div className="animate-pulse-dot text-6xl">🍋</div>
+            </div>
+        );
 
-      const root = ReactDOM.createRoot(rootElement);
-      root.render(
-        <React.StrictMode>
-          <AuthProvider>
-            <App />
-          </AuthProvider>
-        </React.StrictMode>
-      );
+        return user ? <MainApp /> : <AuthPage />;
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
     </script>
   </body>
 </html>
