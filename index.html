@@ -39,6 +39,11 @@
           -ms-overflow-style: none;
           scrollbar-width: none;
       }
+      .vibe-btn.active {
+        background-color: #ccff00;
+        color: black;
+        box-shadow: 3px 3px 0px 0px rgba(0,0,0,1);
+      }
     </style>
     
     <!-- Import Map for Google GenAI -->
@@ -66,12 +71,29 @@
         return new GoogleGenAI({ apiKey: API_KEY });
       };
 
-      const generateAnswer = async (prompt, history) => {
+      const PROMPTS = {
+        fresh: "You are a helpful, friendly, and concise AI assistant.",
+        sour: "You are a sarcastic, witty, and slightly roast-heavy AI. You give good answers but with a sassy attitude.",
+        zest: "You are highly creative, poetic, and enthusiastic. You love using metaphors.",
+        tech: "You are a senior software engineer. Focus purely on code, technical accuracy, and best practices. Be brief."
+      };
+
+      const generateAnswer = async (prompt, history, vibe = 'fresh') => {
         try {
           const ai = getGenAIClient();
           
-          // Combine the previous chat history with the new user prompt
-          const contents = [...history, { role: 'user', parts: [{ text: prompt }] }];
+          // Inject the personality (vibe) as a system-like instruction at the start of the context
+          const systemInstruction = { 
+            role: 'user', 
+            parts: [{ text: `System Instruction: ${PROMPTS[vibe] || PROMPTS.fresh}. Response directly to the user's next message.` }] 
+          };
+
+          // Combine: System Instruction -> History -> New Prompt
+          const contents = [
+            systemInstruction, 
+            ...history, 
+            { role: 'user', parts: [{ text: prompt }] }
+          ];
 
           const response = await ai.models.generateContent({
               model: 'gemini-2.5-flash',
@@ -85,37 +107,9 @@
         }
       };
 
-      const generateImage = async (prompt) => {
-        try {
-          const ai = getGenAIClient();
-          // Using gemini-2.5-flash-image as it is generally available on free tier 
-          // (unlike Imagen 4.0 which requires billing)
-          const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: {
-              parts: [{ text: prompt }],
-            },
-            config: {
-              responseModalities: ['IMAGE'],
-            },
-          });
-          
-          const part = response.candidates?.[0]?.content?.parts?.[0];
-          if (part && part.inlineData) {
-            return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-          }
-          
-          throw new Error("No image data received from the model.");
-        } catch (error) {
-          console.error("Error generating image:", error);
-          throw error; 
-        }
-      };
-
       // Expose functions to global window object
       window.geminiService = {
-        generateAnswer,
-        generateImage
+        generateAnswer
       };
 
       console.log("lime.ai Service attached to window");
@@ -198,6 +192,32 @@
 
       // --- Components ---
 
+      const Logo = ({ size = "text-4xl", iconSize = 40, showText = true }) => (
+        <div className="flex items-center gap-3 select-none">
+          <div className="relative group">
+             {/* The Lime Icon: A stylized geometric lime with an 'eye' */}
+             <svg width={iconSize} height={iconSize} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-transform group-hover:rotate-12">
+                {/* Main Lime Body */}
+                <circle cx="50" cy="50" r="45" fill="#ccff00" stroke="black" strokeWidth="8" />
+                
+                {/* Reflection/Shine */}
+                <path d="M25 25C35 15 50 15 60 20" stroke="black" strokeWidth="6" strokeLinecap="round" className="opacity-30" />
+                
+                {/* The 'Eye' / Spark - Represents AI */}
+                <circle cx="65" cy="45" r="8" fill="black" />
+                
+                {/* Smile / Slice */}
+                <path d="M35 65 Q50 75 65 65" stroke="black" strokeWidth="6" strokeLinecap="round" />
+             </svg>
+          </div>
+          {showText && (
+            <h1 className={`${size} font-black tracking-tighter text-black`}>
+              lime<span className="text-[#ccff00] stroke-black" style={{ WebkitTextStroke: '1px black' }}>.</span>ai
+            </h1>
+          )}
+        </div>
+      );
+
       const AuthPage = () => {
         const [isLogin, setIsLogin] = useState(true);
         const [username, setUsername] = useState('');
@@ -225,13 +245,11 @@
         return (
           <div className="flex items-center justify-center min-h-screen bg-white selection:bg-[#ccff00] selection:text-black font-['Fredoka']">
             <div className="w-full max-w-sm p-8 border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white">
-              <div className="text-center mb-8">
-                <h1 className="text-6xl font-bold text-black mb-2 tracking-tight">
-                  lime<span className="text-[#ccff00] text-7xl">.</span>ai
-                </h1>
-                <div className="h-2 w-24 bg-[#ccff00] mx-auto rounded-full border border-black"></div>
-                <p className="text-black mt-4 font-semibold text-lg tracking-wide">
-                  {isLogin ? 'WELCOME BACK' : 'CREATE ACCOUNT'}
+              <div className="flex flex-col items-center mb-8">
+                <Logo size="text-6xl" iconSize={80} />
+                <div className="h-2 w-24 bg-[#ccff00] mx-auto rounded-full border border-black mt-6"></div>
+                <p className="text-black mt-4 font-semibold text-lg tracking-wide uppercase">
+                  {isLogin ? 'Welcome Back' : 'Create Account'}
                 </p>
               </div>
               
@@ -285,10 +303,11 @@
 
       const QAPanel = () => {
         const [messages, setMessages] = useState([
-          { role: 'model', content: "Hello! I'm lime.ai. I'm listening." }
+          { role: 'model', content: "Hello! I'm lime.ai. Select a vibe and let's chat!" }
         ]);
         const [input, setInput] = useState('');
         const [isLoading, setIsLoading] = useState(false);
+        const [vibe, setVibe] = useState('fresh');
         const messagesEndRef = useRef(null);
 
         const scrollToBottom = () => {
@@ -297,14 +316,15 @@
 
         useEffect(scrollToBottom, [messages]);
 
-        const handleSend = async () => {
-          if (!input.trim() || isLoading) return;
+        const handleSend = async (text = input) => {
+          if (!text.trim() || isLoading) return;
 
-          const userMessage = { role: 'user', content: input };
+          const userMessage = { role: 'user', content: text };
           setMessages((prev) => [...prev, userMessage]);
           setInput('');
           setIsLoading(true);
 
+          // Prepare history without the system instruction (that happens in service)
           const history = messages.map(msg => ({
               role: msg.role,
               parts: [{ text: msg.content }]
@@ -312,7 +332,7 @@
 
           try {
             if (window.geminiService && window.geminiService.generateAnswer) {
-                const response = await window.geminiService.generateAnswer(input, history);
+                const response = await window.geminiService.generateAnswer(text, history, vibe);
                 const modelMessage = { role: 'model', content: response };
                 setMessages((prev) => [...prev, modelMessage]);
             } else {
@@ -325,8 +345,38 @@
           setIsLoading(false);
         };
 
+        const VibeButton = ({ id, label, icon }) => (
+            <button 
+                onClick={() => setVibe(id)}
+                className={`vibe-btn px-4 py-2 rounded-lg font-bold border-2 border-black transition-all flex items-center gap-2 ${vibe === id ? 'active' : 'bg-white text-gray-400 border-gray-200 hover:border-black hover:text-black'}`}
+            >
+                <span>{icon}</span>
+                <span className="uppercase tracking-wider text-sm">{label}</span>
+            </button>
+        );
+
+        const QuickPrompt = ({ text }) => (
+            <button 
+                onClick={() => handleSend(text)}
+                disabled={isLoading}
+                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm font-bold text-gray-600 hover:bg-black hover:text-[#ccff00] hover:border-black transition-all whitespace-nowrap"
+            >
+                {text}
+            </button>
+        );
+
         return (
           <div className="flex flex-col h-full max-w-4xl mx-auto w-full px-4 font-['Fredoka']">
+            
+            {/* Top Bar: Vibe Selector */}
+            <div className="py-4 flex gap-2 overflow-x-auto no-scrollbar justify-center border-b border-dashed border-gray-300">
+                <VibeButton id="fresh" label="Fresh" icon="🍋" />
+                <VibeButton id="sour" label="Sour" icon="😝" />
+                <VibeButton id="zest" label="Zest" icon="✨" />
+                <VibeButton id="tech" label="Tech" icon="💻" />
+            </div>
+
+            {/* Chat Area */}
             <div className="flex-1 overflow-y-auto space-y-6 py-8 no-scrollbar">
               {messages.map((msg, index) => (
                 <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -353,7 +403,19 @@
               <div ref={messagesEndRef} className="h-4" />
             </div>
             
-            <div className="pb-8 pt-4">
+            {/* Bottom Area */}
+            <div className="pb-8 pt-2 flex flex-col gap-4">
+              
+              {/* Quick Prompts */}
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                <QuickPrompt text="Tell me a joke" />
+                <QuickPrompt text="Give me a fun fact" />
+                <QuickPrompt text="Roast my music taste" />
+                <QuickPrompt text="Write a haiku" />
+                <QuickPrompt text="Life advice?" />
+              </div>
+
+              {/* Input Bar */}
               <div className="relative group">
                 <div className="relative flex items-center bg-white border-4 border-black rounded-full shadow-[6px_6px_0px_0px_#ccff00] transition-all focus-within:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] focus-within:translate-x-[2px] focus-within:translate-y-[2px]">
                   <input
@@ -366,12 +428,12 @@
                         handleSend();
                       }
                     }}
-                    placeholder="Ask lime.ai..."
+                    placeholder={`Message lime.ai (${vibe} mode)...`}
                     className="w-full pl-8 py-4 bg-transparent text-black placeholder-gray-400 focus:outline-none rounded-full font-bold text-xl"
                     disabled={isLoading}
                   />
                   <button
-                    onClick={handleSend}
+                    onClick={() => handleSend()}
                     disabled={isLoading || !input.trim()}
                     className="mr-3 p-3 rounded-full bg-black text-[#ccff00] hover:bg-[#ccff00] hover:text-black disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-all border-2 border-transparent hover:border-black"
                   >
@@ -386,149 +448,14 @@
         );
       };
 
-      const ImageGenPanel = () => {
-        const [prompt, setPrompt] = useState('');
-        const [isLoading, setIsLoading] = useState(false);
-        const [imageUrl, setImageUrl] = useState(null);
-        const [error, setError] = useState('');
-
-        const handleGenerate = async () => {
-          if (!prompt.trim()) return;
-          
-          setIsLoading(true);
-          setError('');
-          setImageUrl(null);
-
-          try {
-             if (window.geminiService && window.geminiService.generateImage) {
-                const result = await window.geminiService.generateImage(prompt);
-                setImageUrl(result);
-             } else {
-                throw new Error("Image service not available");
-             }
-          } catch (e) {
-             console.error(e);
-             const msg = e.message || JSON.stringify(e);
-             // Handle specific API errors for better UX
-             if (msg.includes("429") || msg.includes("quota")) {
-                 setError("Daily quota exceeded for free tier. Please try again later.");
-             } else if (msg.includes("400") && msg.includes("billed")) {
-                 setError("This feature requires a billed API account.");
-             } else {
-                 setError("Failed to generate image. Please try again with a different prompt.");
-             }
-          } finally {
-             setIsLoading(false);
-          }
-        };
-
-        return (
-          <div className="flex flex-col h-full max-w-4xl mx-auto w-full px-4 font-['Fredoka'] py-8">
-            <div className="flex-1 flex flex-col items-center justify-center space-y-8">
-              {imageUrl ? (
-                 <div className="relative p-2 border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white transform transition-all hover:scale-[1.01]">
-                    <img src={imageUrl} alt="Generated" className="rounded-2xl max-h-[60vh] w-auto object-contain" />
-                    <button 
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = imageUrl;
-                        link.download = `lime-ai-${Date.now()}.png`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                      }}
-                      className="absolute bottom-4 right-4 bg-black text-[#ccff00] p-3 rounded-xl border-2 border-transparent hover:border-[#ccff00] hover:scale-110 transition-all"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                    </button>
-                 </div>
-              ) : (
-                 <div className="flex flex-col items-center justify-center text-gray-400 space-y-4 p-12 border-4 border-dashed border-gray-200 rounded-3xl text-center">
-                    {isLoading ? (
-                       <div className="w-16 h-16 border-8 border-gray-200 border-t-[#ccff00] rounded-full animate-spin"></div>
-                    ) : (
-                       <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p className="text-xl font-bold">Imagine something...</p>
-                        <p className="text-sm opacity-70">Powered by Gemini Flash</p>
-                       </>
-                    )}
-                 </div>
-              )}
-              
-              {error && (
-                  <div className="w-full p-4 bg-black text-[#ccff00] rounded-xl text-center border-2 border-black animate-pulse">
-                    <p className="font-bold">{error}</p>
-                  </div>
-              )}
-            </div>
-            
-            <div className="pb-8 pt-4 w-full">
-              <div className="relative flex items-center bg-white border-4 border-black rounded-full shadow-[6px_6px_0px_0px_#ccff00] transition-all focus-within:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] focus-within:translate-x-[2px] focus-within:translate-y-[2px]">
-                  <input
-                    type="text"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                         handleGenerate();
-                      }
-                    }}
-                    placeholder="Describe an image..."
-                    className="w-full pl-8 py-4 bg-transparent text-black placeholder-gray-400 focus:outline-none rounded-full font-bold text-xl"
-                    disabled={isLoading}
-                  />
-                  <button
-                    onClick={handleGenerate}
-                    disabled={isLoading || !prompt.trim()}
-                    className="mr-3 px-6 py-3 rounded-full bg-black text-[#ccff00] hover:bg-[#ccff00] hover:text-black disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-all border-2 border-transparent hover:border-black font-bold uppercase tracking-wide"
-                  >
-                    Generate
-                  </button>
-                </div>
-            </div>
-          </div>
-        );
-      };
-
       const MainApp = () => {
         const { user, logout } = useAuth();
-        const [activeTab, setActiveTab] = useState('chat');
 
         return (
           <div className="flex flex-col h-screen bg-white selection:bg-[#ccff00] selection:text-black font-['Fredoka']">
             <header className="flex items-center justify-between px-8 py-6 bg-white border-b-4 border-black sticky top-0 z-10">
               <div className="flex items-center gap-8">
-                <h1 className="text-3xl font-black tracking-tight text-black hover:text-[#ccff00] transition-colors cursor-default">
-                  lime<span className="text-[#ccff00]">.</span>ai
-                </h1>
-                
-                <nav className="hidden md:flex gap-2">
-                   <button 
-                     onClick={() => setActiveTab('chat')}
-                     className={`px-4 py-2 rounded-lg font-bold border-2 transition-all ${
-                       activeTab === 'chat' 
-                       ? 'bg-black text-[#ccff00] border-black shadow-[4px_4px_0px_0px_#ccff00]' 
-                       : 'bg-transparent text-gray-500 border-transparent hover:bg-gray-100'
-                     }`}
-                   >
-                     Chat
-                   </button>
-                   <button 
-                     onClick={() => setActiveTab('image')}
-                     className={`px-4 py-2 rounded-lg font-bold border-2 transition-all ${
-                       activeTab === 'image' 
-                       ? 'bg-black text-[#ccff00] border-black shadow-[4px_4px_0px_0px_#ccff00]' 
-                       : 'bg-transparent text-gray-500 border-transparent hover:bg-gray-100'
-                     }`}
-                   >
-                     Imagine
-                   </button>
-                </nav>
+                <Logo size="text-3xl" iconSize={50} />
               </div>
               
               <div className="flex items-center gap-6">
@@ -544,25 +471,8 @@
               </div>
             </header>
             
-            {/* Mobile Nav */}
-            <div className="md:hidden flex border-b-4 border-black bg-white">
-               <button 
-                 onClick={() => setActiveTab('chat')}
-                 className={`flex-1 py-3 font-black uppercase tracking-widest ${activeTab === 'chat' ? 'bg-[#ccff00] text-black' : 'text-gray-400'}`}
-               >
-                 Chat
-               </button>
-               <div className="w-1 bg-black"></div>
-               <button 
-                 onClick={() => setActiveTab('image')}
-                 className={`flex-1 py-3 font-black uppercase tracking-widest ${activeTab === 'image' ? 'bg-[#ccff00] text-black' : 'text-gray-400'}`}
-               >
-                 Imagine
-               </button>
-            </div>
-            
             <main className="flex-1 overflow-hidden flex flex-col relative bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
-              {activeTab === 'chat' ? <QAPanel /> : <ImageGenPanel />}
+              <QAPanel />
             </main>
           </div>
         );
